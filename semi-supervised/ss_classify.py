@@ -50,6 +50,7 @@ def train_naive_bayes(X, y):
 def train_svm(X, y):
 	from sklearn.svm import LinearSVC
 	from sklearn.model_selection import GridSearchCV
+	from sklearn.calibration import CalibratedClassifierCV
 	# clf1 = GridSearchCV(cv=None,
 	# 	estimator=LinearSVC(intercept_scaling=1, dual=False, fit_intercept=True,
 	# 		penalty='l2', tol=0.0001),
@@ -59,7 +60,8 @@ def train_svm(X, y):
 	# print clf1.best_params_
 	# print "-----------------------------------------------------------------"
 
-	cls = LinearSVC()
+	svm = LinearSVC()
+	cls = CalibratedClassifierCV(svm, method = 'isotonic')
 	cls.fit(X,y)
 	return cls
 
@@ -69,9 +71,32 @@ def addUnlabeled(unlabeled, X,y, cls_lr, cls_nb, cls_svm, speech):
 	yp_nb = cls_nb.predict(unlabeled.X)
 	yp_svm = cls_svm.predict(unlabeled.X)
 
+	pr_proba_lr = cls_lr.predict_proba(unlabeled.X)
+	pr_proba_nb = cls_nb.predict_proba(unlabeled.X)
+	pr_proba_svm = cls_svm.predict_proba(unlabeled.X)
+
+	# print cls_lr.classes_
+	# print "------------------------------" * 5
+	# print pr_proba_lr
+	# print "------------------------------" * 5
+	# print pr_proba_nb
+	# print "------------------------------" * 5
+
+	# print pr_proba_svm
+	# print "------------------------------" * 5
+
+	# print speech.le.classes_
+
 	labels_lr = speech.le.inverse_transform(yp_lr)
 	labels_nb = speech.le.inverse_transform(yp_nb)
 	labels_svm = speech.le.inverse_transform(yp_svm)
+
+
+	# for i in range(len(labels_lr)):
+	# 	print str(labels_lr[i]) + " : " + str(pr_proba_lr[i])
+
+	# print "------------------------------" * 5
+	# print labels_nb
 
 	# f = open("data/labels.tsv", 'w')
 	# f.write("FileIndex,Category\n")
@@ -79,9 +104,18 @@ def addUnlabeled(unlabeled, X,y, cls_lr, cls_nb, cls_svm, speech):
 
 	for i in xrange(len(unlabeled.fnames)):
 		fname = unlabeled.fnames[i]
-		if labels_lr[i] == labels_nb[i] == labels_svm[i]:
+		maxVal_lr = max(pr_proba_lr[i])
+		maxIndex_lr = pr_proba_lr[i].tolist().index(max(pr_proba_lr[i]))
+		maxVal_nb = max(pr_proba_nb[i])
+		maxIndex_nb = pr_proba_nb[i].tolist().index(max(pr_proba_nb[i]))
+		maxVal_svm = max(pr_proba_svm[i])
+		maxIndex_svm = pr_proba_svm[i].tolist().index(max(pr_proba_svm[i]))
+
+		if (labels_lr[i] == labels_nb[i] == labels_svm[i]) and (maxVal_lr > 0.81) and (maxVal_nb > 0.79) and (maxVal_svm > 0.81):
+			print "Here"
 			train_fnames.append(fname)
-			train_labels.append(labels_lr[i])
+			# train_labels.append(labels_lr[i])
+			train_labels.append(speech.le.classes_[maxIndex_lr])
 			train_data.append(unlabeled.data[i])
 			# f.write(unlabeled.fnames[i] + "\t" + labels_lr[i])
 			# f.write("\n")
@@ -111,7 +145,7 @@ def addUnlabeled(unlabeled, X,y, cls_lr, cls_nb, cls_svm, speech):
 	trainy = speech.le.transform(train_labels)
 	
 	cls = train_classifier(trainX, trainy)
-	print "After addin unlabeled data to the training set"
+	print "After adding unlabeled data to the training set"
 	evaluate(trainX, trainy, cls)
 	return cls
 
