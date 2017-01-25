@@ -1,6 +1,6 @@
-Semi-supervised Text Classification
+Supervised Text Classification
 
-This will train a supervised and semi supervised classifier, and save the output predictions in `data/speech-basic.csv`.
+This will train a supervised classifier, and save the output predictions in `data/speech-pred.csv`.
 
 * `speech.py`: All the I/O related functionality. 
 
