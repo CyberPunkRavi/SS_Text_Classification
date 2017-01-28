@@ -47,13 +47,11 @@ def addUnlabeled(unlabeled, X,y, cls_lr, cls_nb, cls_svm, speech):
 	pr_proba_svm = cls_svm.predict_proba(unlabeled.X)
 
 	
-
 	labels_lr = speech.le.inverse_transform(yp_lr)
 	labels_nb = speech.le.inverse_transform(yp_nb)
 	labels_svm = speech.le.inverse_transform(yp_svm)
 
 
-	
 	train_data, train_fnames, train_labels = getLabeledData()
 
 	for i in xrange(len(unlabeled.fnames)):
@@ -78,6 +76,10 @@ def addUnlabeled(unlabeled, X,y, cls_lr, cls_nb, cls_svm, speech):
 
 
 	count_vect = TfidfVectorizer(analyzer = 'word', norm = 'l2', sublinear_tf = True) #max_features = 7916)  
+
+	
+	count_vect = TfidfVectorizer(analyzer = 'word', norm = 'l2', sublinear_tf = True, max_features = 7916)  
+
 	trainX = count_vect.fit_transform(train_data)
 	#print "Speech.trainX" + str(speech.trainX)
 	from sklearn import preprocessing
