@@ -29,6 +29,7 @@ def read_files(tarfname):
 	print "-- transforming data and labels"
 	from sklearn.feature_extraction.text import TfidfVectorizer
 	from sklearn.feature_extraction.text import CountVectorizer
+	from sklearn.feature_extraction import DictVectorizer
 	speech.count_vect = TfidfVectorizer(analyzer = 'word', norm = 'l2', sublinear_tf = True)  #TfidfVectorizer(analyzer = 'word', stop_words = 'english')
 	speech.trainX = speech.count_vect.fit_transform(speech.train_data)
 	#print "Speech.trainX" + str(speech.trainX)
@@ -155,6 +156,16 @@ def read_instance(tar, ifname):
 	ifile = tar.extractfile(inst)
 	content = ifile.read().strip()
 	return content
+
+
+
+def plot_graphs(x, y):
+	import matplotlib.pyplot as plt
+	plt.plot(x, y, color = 'blue', linewidth = 3)
+	plt.axis([0.02, 1200, 0.25, 0.50])
+	plt.show()
+
+
 
 if __name__ == "__main__":
 	print "Reading data"

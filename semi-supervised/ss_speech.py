@@ -29,7 +29,9 @@ def read_files(tarfname):
 	print "-- transforming data and labels"
 	from sklearn.feature_extraction.text import TfidfVectorizer
 	from sklearn.feature_extraction.text import CountVectorizer
-	speech.count_vect = TfidfVectorizer(analyzer = 'word', norm = 'l2', sublinear_tf = True, max_features = 7916)  #TfidfVectorizer(analyzer = 'word', stop_words = 'english')
+	from sklearn.feature_extraction import DictVectorizer
+
+	speech.count_vect = TfidfVectorizer(analyzer = 'word', norm = 'l2', sublinear_tf = True)  #TfidfVectorizer(analyzer = 'word', stop_words = 'english')
 	speech.trainX = speech.count_vect.fit_transform(speech.train_data)
 	#print "Speech.trainX" + str(speech.trainX)
 	speech.devX = speech.count_vect.transform(speech.dev_data)
@@ -82,28 +84,6 @@ def read_tsv(tar, fname):
 		data.append(content)
 	return data, fnames, labels
 
-def write_pred_kaggle_file(unlabeled, cls, outfname, speech):
-	"""Writes the predictions in Kaggle format.
-
-	Given the unlabeled object, classifier, outputfilename, and the speech object,
-	this function write the predictions of the classifier on the unlabeled data and
-	writes it to the outputfilename. The speech object is required to ensure
-	consistent label names.
-	"""
-	yp = cls.predict(unlabeled.X)
-	labels = speech.le.inverse_transform(yp)
-	f = open(outfname, 'w')
-	f.write("FileIndex,Category\n")
-	for i in xrange(len(unlabeled.fnames)):
-		fname = unlabeled.fnames[i]
-		# iid = file_to_id(fname)
-		f.write(str(i+1))
-		f.write(",")
-		#f.write(fname)
-		#f.write(",")
-		f.write(labels[i])
-		f.write("\n")
-	f.close()
 
 def file_to_id(fname):
 	return str(int(fname.replace("unlabeled/","").replace("labeled/","").replace(".txt","")))
@@ -156,6 +136,14 @@ def read_instance(tar, ifname):
 	content = ifile.read().strip()
 	return content
 
+
+
+def plot_graphs(x, y, function):
+	import matplotlib.pyplot as plt
+	plt.plot(x, y, color = 'blue', linewidth = 3)
+	plt.axis([0, 6, 0, 20])
+	plt.show()
+
 if __name__ == "__main__":
 	print "Reading data"
 	tarfname = "data/speech.tar.gz"
@@ -178,19 +166,35 @@ if __name__ == "__main__":
 	ss_classify.evaluate(speech.trainX, speech.trainy, cls_svm)
 	ss_classify.evaluate(speech.devX, speech.devy, cls_svm)
 
+	
 	print "Reading unlabeled data"
 	unlabeled = read_unlabeled(tarfname, speech)
 
 	#Semi Supervised:
-	cls_unlabeled = ss_classify.addUnlabeled(unlabeled, speech.trainX, speech.trainy, cls, cls_nb, cls_svm, speech)
+	cls_unlabeled, plot_trainX = ss_classify.addUnlabeled(unlabeled, speech.trainX, speech.trainy, cls, cls_nb, cls_svm, speech)
 
-	print "Testing new classifier"
-	ss_classify.evaluate(speech.devX, speech.devy, cls_unlabeled)
+	# print "Testing new classifier"
+#	ss_classify.evaluate(speech.devX, speech.devy, cls_unlabeled)
 
-	print "Writing pred file"
-	write_pred_kaggle_file(unlabeled, cls_unlabeled, "data/ss_speech-pred.csv", speech)
+	# print "Writing pred file"
+	# write_pred_kaggle_file(unlabeled, cls_unlabeled, "data/ss_speech-pred.csv", speech)
+
+	# import matplotlib.pyplot as plt
+	# plt.plot(speech.trainX, speech.trainy, color = 'blue', linewidth = 3)
 
 	# You can't run this since you do not have the true labels
 	# print "Writing gold file"
 	# write_gold_kaggle_file("data/speech-unlabeled.tsv", "data/speech-gold.csv")
 	# write_basic_kaggle_file("data/speech-unlabeled.tsv", "data/speech-basic.csv")
+
+
+
+
+
+
+
+
+
+
+
+
